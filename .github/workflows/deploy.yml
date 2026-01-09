@@ -1,0 +1,25 @@
+name: cian_donatehope_workflowdispatch
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploys:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: --- ssh to vm todb18
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          key: ${{secrets.SSH_PRIVATEKEY_AN}}
+          username: an
+          host: 52.221.30.212
+          script: |
+            set -e
+            cd projects/donate-hope-project
+            # ensure we align exactly with remote to avoid divergent-branch errors
+            git fetch --all --prune
+            BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            git reset --hard origin/${BRANCH}
+            git clean -fd
+            docker compose down --remove-orphans || true
+            docker compose up -d --build --remove-orphans
