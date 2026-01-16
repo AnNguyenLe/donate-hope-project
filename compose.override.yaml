@@ -1,0 +1,31 @@
+services:
+  frontend:
+    image: node:23
+    volumes:
+      - ./frontend:/app
+    environment:
+      - REACT_APP_API_BASE_URL=/api
+    command: sh -c "cd /app && npm install --frozen-lockfile && npm start"
+    expose:
+      - 3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+    
+  backend:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    volumes:
+      - ./backend:/app
+    command: sh -c "cd /app/src/DonateHope.WebAPI && dotnet watch run --non-interactive --urls http://0.0.0.0:7066 --no-launch-profile"
+    environment:
+      DB_HOST: db
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.backend.rule=PathPrefix(`/api`)
+      - traefik.http.routers.backend.entrypoints=web
+      - traefik.http.services.backend.loadbalancer.server.port=7066
+    expose:
+      - 7066
+    # depends_on:
+    #   - db

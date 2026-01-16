@@ -22,49 +22,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-    # networks:
-    #   - donate-hope-net
-  frontend:
-    build:
-      context: ./frontend
-      args:
-        - API_BASE_URL=/api
-    labels:
-      - "autoheal=true"
-      - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
-      - "traefik.http.routers.frontend.entrypoints=web"
-    restart: unless-stopped
-    scale: 3
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    # networks:
-    #   - donate-hope-net
-  backend:
-    build: ./backend
-    environment:
-      DB_HOST: db
-    labels:
-      - "autoheal=true"
-      - traefik.enable=true
-      - traefik.http.routers.backend.rule=PathPrefix(`/api`)
-      - traefik.http.routers.backend.entrypoints=web
-    restart: unless-stopped
-    scale: 2
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7066/api/v1/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    # networks:
-    #   - donate-hope-net
-    depends_on:
-      - db
 
   db:
     image: postgres:17
@@ -75,25 +32,6 @@ services:
       - POSTGRES_DB=donate_hope
       - POSTGRES_USER=dba
     restart: unless-stopped
-    labels:
-      - "autoheal=true"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d donate_hope -U dba -h 127.0.0.1 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    # networks:
-    #   - donate-hope-net
-
-  autoheal:
-    image: willfarrell/autoheal
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    restart: always
 
 volumes:
   db-vol:
-# networks:
-#   donate-hope-net:
-#     driver: bridge
