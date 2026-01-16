@@ -25,6 +25,7 @@ RUN dotnet publish -c Release -o /app/publish
 
 # Use the official .NET 8 ASP.NET Core runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+RUN apt update && apt install -y curl && rm -rf /var/lib/apt/list/*
 
 # Set the working directory
 WORKDIR /app

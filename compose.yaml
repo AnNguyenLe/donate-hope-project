@@ -1,22 +1,71 @@
 services:
+  load-balancer:
+    image: traefik:v3
+    restart: unless-stopped
+    ports:
+      - 9000:80
+      - 8080:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - "autoheal=true"
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--ping=true"
+      - "--ping.entryPoint=web"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:80/ping | grep -q 'OK' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # networks:
+    #   - donate-hope-net
   frontend:
     build:
       context: ./frontend
       args:
-        - API_BASE_URL=http://52.221.30.212:8080
-    ports:
-      - 8081:80
-    networks:
-      - donate-hope-net
+        - API_BASE_URL=/api
+    labels:
+      - "autoheal=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+    restart: unless-stopped
+    scale: 3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    # networks:
+    #   - donate-hope-net
   backend:
     build: ./backend
     environment:
       DB_HOST: db
-    ports:
-      - 8080:7066
-    networks:
-      - donate-hope-net
-      
+    labels:
+      - "autoheal=true"
+      - traefik.enable=true
+      - traefik.http.routers.backend.rule=PathPrefix(`/api`)
+      - traefik.http.routers.backend.entrypoints=web
+    restart: unless-stopped
+    scale: 2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7066/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    # networks:
+    #   - donate-hope-net
+    depends_on:
+      - db
+
   db:
     image: postgres:17
     volumes:
@@ -25,11 +74,26 @@ services:
       - POSTGRES_PASSWORD=admin123
       - POSTGRES_DB=donate_hope
       - POSTGRES_USER=dba
-    networks:
-      - donate-hope-net
+    restart: unless-stopped
+    labels:
+      - "autoheal=true"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d donate_hope -U dba -h 127.0.0.1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    # networks:
+    #   - donate-hope-net
+
+  autoheal:
+    image: willfarrell/autoheal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
 
 volumes:
   db-vol:
-networks:
-  donate-hope-net:
-    driver: bridge
+# networks:
+#   donate-hope-net:
+#     driver: bridge
