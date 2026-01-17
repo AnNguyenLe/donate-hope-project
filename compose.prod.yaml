@@ -16,7 +16,7 @@ services:
       start_period: 10s
   
   backend:
-    build: ./backend
+    image: annguyenlemt/donate-hope-backend:master
     environment:
       DB_HOST: db
     labels:
@@ -25,7 +25,7 @@ services:
       - traefik.http.routers.backend.rule=PathPrefix(`/api`)
       - traefik.http.routers.backend.entrypoints=web
     restart: unless-stopped
-    scale: 2
+    # scale: 2
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7066/api/v1/health"]
       interval: 10s
@@ -36,17 +36,14 @@ services:
       - db
 
   frontend:
-    build:
-      context: ./frontend
-      args:
-        - API_BASE_URL=/api
+    image: annguyenlemt/donate-hope-frontend:master
     labels:
       - "autoheal=true"
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
       - "traefik.http.routers.frontend.entrypoints=web"
     restart: unless-stopped
-    scale: 3
+    # scale: 3
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost"]
       interval: 10s
