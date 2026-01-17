@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
 namespace DonateHope.WebAPI.Controllers.v1;
 
 [ApiController]
