@@ -10,7 +10,7 @@ services:
       - "autoheal=true"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d donate_hope -U dba -h 127.0.0.1 || exit 1"]
-      interval: 10s
+      interval: 1m30s
       timeout: 5s
       retries: 3
       start_period: 10s
@@ -25,10 +25,9 @@ services:
       - traefik.http.routers.backend.rule=PathPrefix(`/api`)
       - traefik.http.routers.backend.entrypoints=web
     restart: unless-stopped
-    # scale: 2
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7066/api/v1/health"]
-      interval: 10s
+      interval: 1m30s
       timeout: 5s
       retries: 3
       start_period: 10s
@@ -43,10 +42,9 @@ services:
       - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
       - "traefik.http.routers.frontend.entrypoints=web"
     restart: unless-stopped
-    # scale: 3
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 10s
+      interval: 1m30s
       timeout: 5s
       retries: 3
       start_period: 10s
@@ -54,7 +52,7 @@ services:
   load-balancer:
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:80/ping | grep -q 'OK' || exit 1"]
-      interval: 10s
+      interval: 1m30s
       timeout: 5s
       retries: 5
       start_period: 10s

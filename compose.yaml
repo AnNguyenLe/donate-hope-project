@@ -18,7 +18,7 @@ services:
       - "--ping.entryPoint=web"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:80/ping | grep -q 'OK' || exit 1"]
-      interval: 10s
+      interval: 1m30s
       timeout: 5s
       retries: 5
       start_period: 10s
